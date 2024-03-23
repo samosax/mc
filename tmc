@@ -1,0 +1,158 @@
+add this to database.kt
+
+fun updateData(oldName: String, newAge: Int) {
+    val db = this.writableDatabase
+    val cv = ContentValues()
+    cv.put("Age", newAge)
+    val result = db.update("Users", cv, "Name = ?", arrayOf(oldName))
+    if (result == -1) {
+        Toast.makeText(context, "Failed to update", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(context, "Successfully updated", Toast.LENGTH_SHORT).show()
+    }
+}
+
+add this to mainactivity.kt
+
+update.setOnClickListener {
+    val userName = name.text.toString()
+    val userAge = age.text.toString().toInt()
+    db.updateData(userName, userAge)
+    result.text = "User '$userName' updated successfully."
+}
+
+On Fri, Mar 22, 2024 at 6:43 PM 21PW35 - SRI NITIN S <21pw35@psgtech.ac.in> wrote:
+MainActivity.kt
+package com.example.myapplication
+
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val name = findViewById<EditText>(R.id.edit_name)
+        val age = findViewById<EditText>(R.id.edit_age)
+        val insert = findViewById<Button>(R.id.insert)
+        val view = findViewById<Button>(R.id.view)
+        val delete = findViewById<Button>(R.id.delete)
+        val result = findViewById<TextView>(R.id.textView4)
+
+        val context = this
+        val db = Database(context)
+
+        insert.setOnClickListener {
+            val user = Users(name.text.toString(), age.text.toString().toInt())
+            db.insertData(user)
+        }
+
+        view.setOnClickListener {
+            result.text = "" // Clear previous text
+            val data = db.readData()
+            for (i in data.indices) {
+                result.append(data[i].name + " " + data[i].age + "\n")
+            }
+        }
+
+        delete.setOnClickListener {
+            val userName = name.text.toString()
+            db.deleteData(userName)
+            name.text.clear()
+            age.text.clear()
+            result.text = "User '$userName' deleted successfully."
+        }
+    update.setOnClickListener {
+    val userName = name.text.toString()
+    val userAge = age.text.toString().toInt()
+    db.updateData(userName, userAge)
+    result.text = "User '$userName' updated successfully."
+}
+    }
+}
+Users.kt
+package com.example.myapplication
+
+class Users {
+    var name : String = ""
+    var age : Int = 0
+
+    constructor(){}
+    constructor(name: String, age:Int){
+        this.name = name
+        this.age = age
+    }
+}
+Database.kt
+package com.example.myapplication
+
+import android.content.ContentValues
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
+import android.widget.Toast
+
+class Database(var context: Context): SQLiteOpenHelper(context, "UserDB", null,1) {
+    override fun onCreate(db: SQLiteDatabase?) {
+        val createTable = "CREATE TABLE Users(Name VARCHAR(50), Age INTEGER)";
+        db?.execSQL(createTable)
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        TODO("Not yet implemented")
+    }
+
+    fun insertData(user: Users){
+        val db = this.writableDatabase
+        var cv = ContentValues()
+        cv.put("Name", user.name)
+        cv.put("Age", user.age)
+
+        var result = db.insert("Users", null, cv)
+        if (result == -1L) {
+            Toast.makeText(context, "Failed", Toast.LENGTH_SHORT).show()
+        }
+        else
+            Toast.makeText(context, "Success", Toast.LENGTH_SHORT).show()
+    }
+
+    fun readData(): MutableList<Users>{
+        var list: MutableList<Users> = ArrayList()
+        val db = this.readableDatabase
+        val result = db.rawQuery("SELECT * FROM Users", null)
+        if(result.moveToFirst()){
+            do{
+                var user = Users()
+                user.name = result.getString(0)
+                user.age = result.getString(1).toInt()
+                list.add(user)
+            }while (result.moveToNext())
+        }
+        return list
+    }
+
+    fun deleteData(name: String) {
+        val db = this.writableDatabase
+        val result = db.delete("Users", "Name = ?", arrayOf(name))
+        if (result == -1) {
+            Toast.makeText(context, "Failed to delete", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Successfully deleted", Toast.LENGTH_SHORT).show()
+        }
+    }
+  fun updateData(oldName: String, newAge: Int) {
+    val db = this.writableDatabase
+    val cv = ContentValues()
+    cv.put("Age", newAge)
+    val result = db.update("Users", cv, "Name = ?", arrayOf(oldName))
+    if (result == -1) {
+        Toast.makeText(context, "Failed to update", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(context, "Successfully updated", Toast.LENGTH_SHORT).show()
+    }
+}
+}
